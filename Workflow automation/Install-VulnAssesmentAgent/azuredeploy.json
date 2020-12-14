@@ -66,8 +66,7 @@
                     "contentVersion": "1.0.0.0",
                     "parameters": {
                         "$connections": {
-                            "defaultValue": {
-                            },
+                            "defaultValue": {},
                             "type": "Object"
                         }
                     },
@@ -88,8 +87,51 @@
                         }
                     },
                     "actions": {
+                        "Condition": {
+                            "actions": {
+                                "Set_variable": {
+                                    "runAfter": {},
+                                    "type": "SetVariable",
+                                    "inputs": {
+                                        "name": "Type",
+                                        "value": "@{concat(variables('ResourceProvider'), '/virtualmachines')}"
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Initialize_variable_2": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "else": {
+                                "actions": {
+                                    "Set_variable_2": {
+                                        "runAfter": {},
+                                        "type": "SetVariable",
+                                        "inputs": {
+                                            "name": "Type",
+                                            "value": "@{concat(variables('ResourceProvider'), '/machines')}"
+                                        }
+                                    }
+                                }
+                            },
+                            "expression": {
+                                "and": [
+                                    {
+                                        "equals": [
+                                            "@variables('ResourceProvider')",
+                                            "Microsoft.Compute"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "If"
+                        },
                         "Create_or_update_a_template_deployment": {
                             "runAfter": {
+                                "Condition": [
+                                    "Succeeded"
+                                ]
                             },
                             "type": "ApiConnection",
                             "inputs": {
@@ -103,7 +145,7 @@
                                                 {
                                                     "apiVersion": "2015-06-01-preview",
                                                     "name": "[[concat('@{split(triggerBody()?['properties']?['resourceDetails']?['id'], '/')[8]}', '/Microsoft.Security/default')]",
-                                                    "type": "Microsoft.Compute/virtualMachines/providers/serverVulnerabilityAssessments"
+                                                    "type": "@{variables('Type')}/providers/serverVulnerabilityAssessments"
                                                 }
                                             ]
                                         }
@@ -121,10 +163,38 @@
                                     "x-ms-api-version": "2016-06-01"
                                 }
                             }
+                        },
+                        "Initialize_variable": {
+                            "runAfter": {},
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "ResourceProvider",
+                                        "type": "string",
+                                        "value": "@{split(triggerBody()?['properties']?['resourceDetails']?['id'], '/')[6]}"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_2": {
+                            "runAfter": {
+                                "Initialize_variable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "Type",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
                         }
                     },
-                    "outputs": {
-                    }
+                    "outputs": {}
                 },
                 "parameters": {
                     "$connections": {
